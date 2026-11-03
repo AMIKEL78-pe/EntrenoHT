@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plan de Entrenamiento ANTOMIA FC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: banda de pizarra táctica con los controles; debajo, tablas de plantilla como herramienta de trabajo. */
+:root{
+  --bg:#f3f6f1;--surface:#ffffff;--surface2:#e8eee5;--fg:#16251b;--muted:#566559;--line:#ccd7ca;
+  --pitch:#17452c;--pitch-fg:#f1f7ef;--pitch-muted:#b6cdb9;--pitch-line:#39694b;--accent:#176a3a;
+  --full:#3f8f58;--full-fg:#ffffff;--part:#a9cfac;--part-fg:#17361f;--osm:#c9cfc8;--osm-fg:#2c352e;--none:#eef1ec;--none-fg:#68746b;
+  --gold:#a86a00;--gold-bg:#fbefd5;--warn:#a93226;--warn-bg:#fbe6e2;
+  --ui:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --display:Bahnschrift,"DIN Alternate","Arial Narrow","Segoe UI",system-ui,sans-serif;
+  --data:"Cascadia Mono",Consolas,ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101a14;--surface:#17231b;--surface2:#203026;--fg:#e8f0e8;--muted:#a0b0a3;--line:#33453a;
+  --pitch:#0f3321;--pitch-fg:#eff7ef;--pitch-muted:#a8c4ad;--pitch-line:#2f5a40;--accent:#7bd197;
+  --full:#3b9258;--full-fg:#ffffff;--part:#3c6a4a;--part-fg:#e4f5e6;--osm:#46524a;--osm-fg:#e4ebe4;--none:#1d2a22;--none-fg:#94a497;
+  --gold:#f0bd5e;--gold-bg:#3a2d12;--warn:#f39a8d;--warn-bg:#40201b;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101a14;--surface:#17231b;--surface2:#203026;--fg:#e8f0e8;--muted:#a0b0a3;--line:#33453a;
+  --pitch:#0f3321;--pitch-fg:#eff7ef;--pitch-muted:#a8c4ad;--pitch-line:#2f5a40;--accent:#7bd197;
+  --full:#3b9258;--full-fg:#ffffff;--part:#3c6a4a;--part-fg:#e4f5e6;--osm:#46524a;--osm-fg:#e4ebe4;--none:#1d2a22;--none-fg:#94a497;
+  --gold:#f0bd5e;--gold-bg:#3a2d12;--warn:#f39a8d;--warn-bg:#40201b;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--ui);margin:0}
+.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.board{background:var(--pitch);color:var(--pitch-fg);padding-block:18px 0}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;align-items:baseline}
+h1{font:600 26px/1.15 var(--display);margin:0;letter-spacing:.2px;text-wrap:balance}
+.head small{color:var(--pitch-muted);font-size:13px}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px 14px;margin-top:14px}
+.settings label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;letter-spacing:.3px;color:var(--pitch-muted);min-width:0}
+.settings select,.settings input{background:var(--pitch);color:var(--pitch-fg);border:1px solid var(--pitch-line);border-radius:4px;padding:6px;font:13px var(--ui);width:100%;min-width:0}
+nav.tabs{display:flex;gap:2px;margin-top:16px;overflow-x:auto}
+nav.tabs button{background:transparent;color:var(--pitch-muted);border:0;padding:9px 14px;font:600 14px var(--ui);cursor:pointer;border-radius:5px 5px 0 0;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--bg);color:var(--fg)}
+nav.tabs button:hover{color:var(--pitch-fg)}nav.tabs button[aria-selected="true"]:hover{color:var(--fg)}
+main{padding-block:18px 48px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+h2{font:600 19px/1.25 var(--display);margin:0 0 4px}
+h3{font:600 15px/1.3 var(--ui);margin:18px 0 6px}
+p{margin:0 0 8px;max-width:75ch}.note{color:var(--muted);font-size:13px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-bottom:12px}
+.controls label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+select,input,textarea{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:6px;font:13px var(--ui);max-width:100%}
+.big{font-size:15px;font-weight:600;min-width:min(280px,100%)}
+button.act{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:6px 10px;font:600 13px var(--ui);cursor:pointer}
+button.act:hover{border-color:var(--accent);color:var(--accent)}
+button.pri{background:var(--accent);color:var(--bg);border-color:var(--accent)}button.pri:hover{color:var(--bg);opacity:.9}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:12px}
+.kpi{background:var(--surface);padding:9px 12px;min-width:0}.kpi b{display:block;font:600 21px/1.2 var(--display);font-variant-numeric:tabular-nums}.kpi span{font-size:12px;color:var(--muted)}
+.lineup{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-bottom:10px;font-size:12.5px}
+.chip{display:inline-block;padding:1px 7px;border-radius:3px;font:600 12px var(--data);white-space:nowrap}
+.c100{background:var(--full);color:var(--full-fg)}.c50{background:var(--part);color:var(--part-fg)}.cos{background:var(--osm);color:var(--osm-fg)}.c0{background:var(--none);color:var(--none-fg)}.cgold{background:var(--gold-bg);color:var(--gold)}.cwarn{background:var(--warn-bg);color:var(--warn)}
+.tw{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;font-size:13px}
+th{font-size:11.5px;color:var(--muted);font-weight:600;background:var(--surface2);position:sticky;top:0}
+td.num,th.num{text-align:right}td select{padding:2px;font-size:12px}
+td.name,th.name{position:sticky;left:0;background:var(--surface);z-index:1;max-width:210px;overflow:hidden;text-overflow:ellipsis}th.name{background:var(--surface2);z-index:2}
+tr.off td:not(.name){color:var(--muted)}
+.lvl{font:12px var(--data)}.lvl em{font-style:normal;color:var(--muted)}
+.wk{display:inline-block;min-width:30px;text-align:center;font:600 12.5px var(--data);padding:1px 3px;border-radius:3px}
+.fast{background:var(--full);color:var(--full-fg)}.mid{background:var(--part);color:var(--part-fg)}.slow{background:var(--osm);color:var(--osm-fg)}.vslow{background:var(--none);color:var(--none-fg)}
+.flag{color:var(--gold);font-size:11px;margin-left:5px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:9px 0;font-size:12px;color:var(--muted);align-items:center}
+.gantt{display:flex;height:48px;border:1px solid var(--line);margin:12px 0 2px;overflow:hidden}
+.gantt div{display:flex;flex-direction:column;justify-content:center;padding:0 7px;color:var(--pitch-fg);overflow:hidden;font-size:12px;border-right:2px solid var(--bg);min-width:0;white-space:nowrap}
+.gantt div b{overflow:hidden;text-overflow:ellipsis}
+.ticks{position:relative;height:20px;font:11px var(--data);color:var(--muted)}.ticks span{position:absolute;transform:translateX(-50%)}.ticks span:first-child{transform:none}
+.blocks{display:flex;flex-direction:column;gap:7px;margin:10px 0}
+.block{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:7px 9px;background:var(--surface);border:1px solid var(--line)}
+.block select{flex:1 1 210px;min-width:0}.block input{width:66px}.block .dates{font:12px var(--data);color:var(--muted);flex:1 1 170px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}@media(max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+.scroll{max-height:440px;overflow:auto}
+textarea{width:100%;min-height:115px;font:12px var(--data)}
+code{font:12.5px var(--data);background:var(--surface2);padding:1px 4px;border-radius:3px}
+.formula{font:13px/1.7 var(--data);background:var(--surface);border:1px solid var(--line);padding:10px;overflow-x:auto;white-space:pre-wrap;max-width:100%}
+a{color:var(--accent)}
+ul{padding-left:20px;margin:6px 0;max-width:75ch}li{margin-bottom:4px}
+.msg{min-height:18px;font-size:13px;color:var(--accent);margin:6px 0}
+@media (prefers-reduced-motion:no-preference){button{transition:color .1s,border-color .1s}}
+</style>
+
+<header class="board"><div class="wrap">
+  <div class="head"><h1>Plan de Entrenamiento · ANTOMIA FC</h1><small id="sub"></small></div>
+  <div class="settings" id="settings"></div>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+</div></header>
+<main class="wrap" id="main"></main>
+
+<script>
+/* ===== Datos ===== */
+var SK=[['gk','Portería'],['def','Defensa'],['pm','Jugadas'],['wg','Lateral'],['pa','Pases'],['sc','Anotación'],['sp','Balón parado']];
+var SKN={};SK.forEach(function(s){SKN[s[0]]=s[1]});
+var LV=['inexistente','desastroso','horrible','pobre','débil','insuficiente','aceptable','bueno','excelente','formidable','destacado','brillante','magnífico','clase mundial','sobrenatural','titánico','extraterrestre','mítico','mágico','utópico','divino'];
+var POS=['POR','DL','DC','LAT','MC','DEL'];
+var ALL=POS.slice(), OUT=['DL','DC','LAT','MC','DEL'];
+/* k, posiciones y ósmosis: constantes públicas de Hattrick Organizer (core/training/type). */
+var TY=[
+ {id:'gk',n:'Portería',sk:'gk',k:5.1,full:['POR'],part:[],os:0,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}},
+ {id:'def',n:'Defensa',sk:'def',k:2.88,full:['DL','DC'],part:[],os:1/6,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}},
+ {id:'pm',n:'Jugadas',sk:'pm',k:3.36,full:['MC'],part:['LAT'],os:1/8,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}},
+ {id:'wg',n:'Lateral',sk:'wg',k:4.8,full:['LAT'],part:['DL'],os:1/8,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}},
+ {id:'pa',n:'Pases',sk:'pa',k:3.6,full:['LAT','MC','DEL'],part:[],os:1/6,f:{POR:1,DL:2,DC:2,LAT:2,MC:2,DEL:2}},
+ {id:'sc',n:'Anotación',sk:'sc',k:3.24,full:['DEL'],part:[],os:1/6,f:{POR:1,DL:2,DC:2,LAT:2,MC:1,DEL:3}},
+ {id:'sp',n:'Balón parado',sk:'sp',k:14.7,full:ALL,part:[],os:0,bonus:1,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}},
+ {id:'dp',n:'Defensa (porteros, defensores y mediocampo)',sk:'def',k:1.38,full:['POR','DL','DC','LAT','MC'],part:[],os:1/6,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}},
+ {id:'wa',n:'Lateral (laterales y delanteros)',sk:'wg',k:3.12,full:['LAT','DEL'],part:[],os:5/39,f:{POR:1,DL:2,DC:2,LAT:2,MC:1,DEL:3}},
+ {id:'tp',n:'Pases (defensores y mediocampo)',sk:'pa',k:3.15,full:['DL','DC','LAT','MC'],part:[],os:1/6,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}},
+ {id:'sh',n:'Anotación y balón parado',sk:'sc',k:1.5,full:ALL,part:[],os:0,f:{POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0}}
+];
+var TYM={};TY.forEach(function(t){TYM[t.id]=t});
+var COACH=[[.7343,'73%'],[.8324,'83%'],[.92,'92% (tu entrenador)'],[1,'100%'],[1.0375,'104%']];
+/* name, años, días, TSI, especialidad, rol, gk,def,pm,wg,pa,sc,sp, liga, amistoso (leído de Hattrick el 03-11-2026) */
+var RAW=[
+['Benjamín Márquez',23,43,113520,'Cabeceador','MC',1,4,9,5,15,6,2,'LAT',''],
+['Francisco Ignacio Alvargonzález',22,16,80410,'Potente','DL',1,14,5,8,7,5,7,'DL','MC'],
+['Eugenio Murga',22,82,79720,'Potente','DL',1,15,5,8,5,3,8,'DL','MC'],
+['Hipólito Garrido',22,38,75280,'Potente','DC',1,14,7,4,6,5,7,'DC','LAT'],
+['Danfer Heredia',21,29,48270,'Cabeceador','DC',1,14,5,2,3,3,3,'DC','MC'],
+['Frank Moen',21,71,36060,'Cabeceador','LAT',1,8,4,14,4,3,6,'LAT',''],
+['Eduardo Ochoa Casado',22,81,27110,'Cabeceador','DC',1,12,6,4,5,4,4,'DC','LAT'],
+['Dietmar Franke',21,16,16740,'Impredecible','MC',1,5,11,3,6,4,1,'MC',''],
+['Daniel Rejzek',18,5,4620,'-','MC',1,5,10,2,4,3,4,'MC',''],
+['Erick Daga',17,95,3900,'-','MC',1,5,9,4,3,3,5,'MC',''],
+['Massimiliano Lora',18,13,3280,'Rápido','MC',1,4,9,3,3,4,2,'','DC'],
+['Pietro Alberzoni',36,2,1460,'-','MC',0,6,9,3,9,1,5,'',''],
+['Orlando Eyzaguirre',22,84,1240,'Técnico','POR',7,8,1,2,2,1,8,'POR','POR'],
+['Niko Iiskola',39,56,960,'-','DC',0,12,0,0,0,0,14,'',''],
+['Estéfano Caballero',17,100,800,'-','LAT',1,4,3,7,4,4,2,'',''],
+['Juan Martín Mesías',17,103,800,'-','DL',2,7,4,4,5,4,2,'','DC'],
+['Valentín Hinostroza',17,76,750,'-','DEL',1,3,6,6,3,5,3,'',''],
+['Ángel La Jara',20,5,740,'-','DEL',1,5,2,4,4,6,8,'',''],
+['Elmer Farías',17,111,710,'Potente','LAT',1,3,4,6,7,3,5,'',''],
+['Betto Machado',19,20,530,'Impredecible','LAT',1,5,4,5,4,4,9,'','DL'],
+['Tarik Ahmetbegović',37,100,490,'-','MC',0,4,10,2,4,3,11,'',''],
+['Leandro Zárate',19,87,470,'-','DL',1,6,5,4,3,3,7,'',''],
+['Diodorico Chicata',17,73,240,'-','DEL',1,4,4,4,3,5,2,'',''],
+['Paolo Goyzueta',17,97,220,'-','LAT',1,4,3,6,4,3,3,'','DL'],
+['Alexis Alberti',17,23,170,'-','DEL',1,3,5,4,4,4,1,'',''],
+['久嗣 (Hisatsugu) 町田 (Machida)',17,98,160,'Cabeceador','DL',1,6,2,3,3,3,2,'','DC'],
+['Heliodoro Murga',20,61,90,'-','LAT',1,4,4,4,2,3,3,'',''],
+['Nolberto Garrido',20,43,20,'-','POR',4,4,2,1,2,2,5,'',''],
+['Alfonso Granda',45,56,0,'-','',0,0,0,0,0,0,9,'',''],
+['Fernando Bonifaz',58,60,0,'Técnico','',0,0,0,0,0,0,0,'',''],
+['Tomás Vidaurre',56,25,0,'Técnico','',0,0,0,0,0,0,0,'','']
+];
+function mkPlayers(){return RAW.map(function(r){var o={name:r[0],y:r[1],d:r[2],tsi:r[3],spec:r[4],role:r[5],s:{}};SK.forEach(function(k,i){o.s[k[0]]=r[6+i]});o.a=r[13];o.b=r[14];return o})}
+function defaults(){var pl=mkPlayers(),base={};pl.forEach(function(p){base[p.name]=[p.a,p.b]});
+ return {set:{coach:.92,ass:10,int:100,stam:10,start:'2026-11-05',prog:0,cal:100},players:pl,base:base,lineups:{},taker:'',type:'pm',levels:3,filter:'all',sort:'weeks',cmpMode:'plan',tab:'sim',
+ blocks:[{t:'pm',w:8},{t:'wg',w:8},{t:'pa',w:8}],evp:''}}
+var KEY='ht-plan-antomia-v1',S=defaults();
+try{var sv=localStorage.getItem(KEY);if(sv){var pj=JSON.parse(sv);S=Object.assign(defaults(),pj)}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ===== Motor ===== */
+function factorSkill(l){var f=l<9?16.289*Math.exp(-.1396*l):54.676/l-1.438;return Math.max(f,.05)}
+function ageOf(p,wk){return p.y+(p.d+7*(wk||0))/112}
+function gain(level,age,ty,time,s){s=s||S.set;return Math.min(1,ty.k*time*(54/(age+37))*(1+.035*s.ass)*s.coach*(1-s.stam/100)*(s.int/100)*factorSkill(level)*.01*(s.cal/100))}
+function lineup(tid){if(!S.lineups[tid])S.lineups[tid]=JSON.parse(JSON.stringify(S.base));return S.lineups[tid]}
+function posValue(ty,pos){if(!pos)return 0;if(ty.bonus&&pos==='POR')return 1.25;if(ty.full.indexOf(pos)>=0)return 1;if(ty.part.indexOf(pos)>=0)return .5;return ty.os}
+function timeFor(p,ty,ideal){if(ideal)return 1;var l=lineup(ty.id)[p.name]||['',''];var v=Math.max(posValue(ty,l[0]),posValue(ty,l[1]));if(ty.bonus&&S.taker===p.name&&(l[0]||l[1]))v=1.25;return v}
+function stepWeeks(p,ty,n,time){var r=[],lvl=p.s[ty.sk],pr=S.set.prog/100,w=0;if(!time)return r;
+ for(var i=0;i<n;i++){var c=0;while(pr<1&&w<780){pr+=gain(lvl,ageOf(p,w),ty,time);w++;c++}if(pr<1)break;pr-=1;lvl++;r.push({w:c,total:w,lvl:lvl})}return r}
+function addWeeks(iso,w){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+7*w);return d}
+function fmt(d){return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear()}
+function dateAt(total){return fmt(addWeeks(S.set.start,total-1))}
+function fmtAge(a){var y=Math.floor(a);return y+'a '+Math.round((a-y)*112)+'d'}
+function pct(t){return t>=1.25?'125%':t===1?'100%':t===.5?'50%':t?dec(Math.round(t*1000)/10)+'%':'0%'}
+function chipCls(t){return t>=1?'c100':t===.5?'c50':t?'cos':'c0'}
+function wkCls(w){return w<=6?'fast':w<=10?'mid':w<=16?'slow':'vslow'}
+function esc(x){return String(x).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function lvName(l){return LV[l]||('nivel '+l)}
+/* Simula la cadena de bloques */
+function simulate(){var res={},ev=[],wk=0;S.players.forEach(function(p){res[p.name]={s:Object.assign({},p.s),pr:{gk:0,def:0,pm:0,wg:0,pa:0,sc:0,sp:0}};SK.forEach(function(k){res[p.name].pr[k[0]]=S.set.prog/100})});
+ S.blocks.forEach(function(b){var ty=TYM[b.t];for(var i=0;i<b.w;i++){S.players.forEach(function(p){var t=timeFor(p,ty);if(!t)return;var r=res[p.name];r.pr[ty.sk]+=gain(r.s[ty.sk],ageOf(p,wk),ty,t);if(r.pr[ty.sk]>=1){r.pr[ty.sk]-=1;r.s[ty.sk]++;ev.push({wk:wk+1,name:p.name,sk:ty.sk,lvl:r.s[ty.sk],ty:ty.n})}});wk++}});
+ return{res:res,ev:ev,weeks:wk}}
+
+/* ===== Interfaz ===== */
+function opt(v,l,sel){return '<option value="'+esc(v)+'"'+(String(v)===String(sel)?' selected':'')+'>'+esc(l)+'</option>'}
+function renderSettings(){var s=S.set,h='';
+ h+='<label for="sCoach">Velocidad del entrenador<select id="sCoach" data-set="coach">'+COACH.map(function(c){return opt(c[0],c[1],s.coach)}).join('')+'</select></label>';
+ h+='<label for="sAss">Niveles de asistentes (+'+Math.round(s.ass*3.5*10)/10+'%)<input id="sAss" data-set="ass" type="number" min="0" max="10" value="'+s.ass+'"></label>';
+ h+='<label for="sInt">Intensidad %<input id="sInt" data-set="int" type="number" min="1" max="100" value="'+s.int+'"></label>';
+ h+='<label for="sSta">Condición %<input id="sSta" data-set="stam" type="number" min="0" max="90" value="'+s.stam+'"></label>';
+ h+='<label for="sSt">Próximo entrenamiento<input id="sSt" data-set="start" type="date" value="'+s.start+'"></label>';
+ h+='<label for="sPr">Avance ya acumulado<select id="sPr" data-set="prog">'+[[0,'0% (recién subido)'],[25,'25%'],[50,'50%'],[75,'75%']].map(function(o){return opt(o[0],o[1],s.prog)}).join('')+'</select></label>';
+ document.getElementById('settings').innerHTML=h;
+ document.getElementById('sub').textContent='Eficiencia de la habilidad '+Math.round((1-s.stam/100)*s.coach*100)+'% · '+S.players.length+' jugadores';
+}
+var TABS=[['sim','Simulador'],['cmp','Comparar'],['plan','Cronograma'],['team','Plantilla'],['met','Método']];
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(function(t){return '<button role="tab" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+'</button>'}).join('')}
+function typeOpts(sel){return TY.map(function(t){return opt(t.id,t.n,sel)}).join('')}
+
+function lineupSummary(ty){var l=lineup(ty.id),c=[{},{}];POS.forEach(function(p){c[0][p]=0;c[1][p]=0});var tot=[0,0],fullC=[0,0];
+ S.players.forEach(function(p){var v=l[p.name]||['',''];[0,1].forEach(function(i){if(v[i]){c[i][v[i]]++;tot[i]++;if(ty.full.indexOf(v[i])>=0)fullC[i]++}})});
+ function line(i,lab){var extra=tot[i]>11?' <span class="chip cwarn">'+tot[i]+'/11 excedido</span>':'';return '<span><b>'+lab+':</b> '+POS.filter(function(p){return c[i][p]}).map(function(p){return p+' '+c[i][p]}).join(' · ')+(tot[i]?'':'sin alinear')+' ('+tot[i]+'/11)'+extra+'</span>'}
+ return line(0,'Liga')+line(1,'Amistoso')}
+function renderSim(){var ty=TYM[S.type],n=S.levels,rows=[],s=S.set,ups=0,direct=0,first=null,thisSeason=0;
+ S.players.forEach(function(p){var t=timeFor(p,ty),st=stepWeeks(p,ty,n,t),st16=stepWeeks(p,ty,20,t);
+  var cnt=st16.filter(function(x){return x.total<=16}).length;thisSeason+=cnt;if(t>=1)direct++;
+  if(st[0]&&(!first||st[0].total<first.w))first={w:st[0].total,n:p.name,l:st[0].lvl};
+  rows.push({p:p,t:t,st:st,cnt:cnt})});
+ var fl=S.filter;var vis=rows.filter(function(r){return fl==='all'||(fl==='train'&&r.t>0)||(fl==='young'&&ageOf(r.p)<30)});
+ vis.sort(function(a,b){if(S.sort==='tsi')return b.p.tsi-a.p.tsi;if(S.sort==='age')return ageOf(a.p)-ageOf(b.p);
+  var x=a.st.length?a.st[a.st.length-1].total/a.st.length:1e9,y=b.st.length?b.st[b.st.length-1].total/b.st.length:1e9;if(S.sort==='level')return b.p.s[ty.sk]-a.p.s[ty.sk];return (a.st[0]?a.st[0].total:1e9)-(b.st[0]?b.st[0].total:1e9)||x-y});
+ var heads='';for(var i=1;i<=n;i++)heads+='<th class="num">+'+i+'</th>';
+ var body=vis.map(function(r){var p=r.p,l=lineup(ty.id)[p.name]||['',''],lvl=p.s[ty.sk];
+  var cells='';for(var j=0;j<n;j++){var x=r.st[j];cells+='<td class="num">'+(x?'<span class="wk '+wkCls(x.w)+'" title="'+esc(lvName(x.lvl))+' el '+dateAt(x.total)+'">'+x.w+'</span>':'—')+'</td>'}
+  var last=r.st[r.st.length-1],lastDone=r.st.length===n;
+  return '<tr class="'+(r.t?'':'off')+'"><td class="name" title="'+esc(p.name)+'">'+esc(p.name)+(ageOf(p)>=30?'<span class="flag">≥30</span>':'')+'</td><td>'+fmtAge(ageOf(p))+'</td>'+
+  '<td>'+posSel(p.name,0,l[0],ty.id)+'</td><td>'+posSel(p.name,1,l[1],ty.id)+'</td>'+
+  '<td><span class="chip '+chipCls(r.t)+'">'+pct(r.t)+'</span></td><td class="lvl">'+lvl+' <em>'+esc(lvName(lvl))+'</em></td>'+cells+
+  '<td class="num"><b>'+(last&&lastDone?last.total:'—')+'</b></td><td>'+(last&&lastDone?dateAt(last.total):'—')+'</td><td class="lvl">'+(last&&lastDone?(lvl+n)+' <em>'+esc(lvName(lvl+n))+'</em>':'—')+'</td><td class="num">'+r.cnt+'</td></tr>'}).join('');
+ var t0=typeNote(ty);
+ return '<div class="controls"><label for="simType">Entrenamiento<select class="big" id="simType" data-ui="type">'+typeOpts(S.type)+'</select></label>'+
+ '<label for="simLv">Niveles a subir<select id="simLv" data-ui="levels">'+[1,2,3,4,5,6].map(function(v){return opt(v,'+'+v,S.levels)}).join('')+'</select></label>'+
+ '<label for="simF">Mostrar<select id="simF" data-ui="filter">'+opt('all','Toda la plantilla',S.filter)+opt('train','Solo quienes entrenan',S.filter)+opt('young','Menores de 30',S.filter)+'</select></label>'+
+ '<label for="simS">Ordenar<select id="simS" data-ui="sort">'+opt('weeks','Próximo ascenso',S.sort)+opt('tsi','TSI',S.sort)+opt('age','Más jóvenes',S.sort)+opt('level','Nivel actual',S.sort)+'</select></label>'+
+ '<button class="act" id="suggest">Sugerir amistoso</button><button class="act" id="resetL">Restablecer alineación</button></div>'+
+ '<p class="note">'+t0+'</p><div class="kpis">'+
+ kpi(first?first.w+' sem':'—','Primer ascenso'+(first?': '+first.n+' a '+lvName(first.l):''))+
+ kpi(thisSeason,'Ascensos de la plantilla en 16 semanas')+
+ kpi(direct,'Jugadores con entrenamiento completo')+
+ kpi(Math.round(gain(7,17,ty,1)>0?1/gain(7,17,ty,1)*10:0)/10+' sem','Referencia: 17 años, 7→8, al 100%')+'</div>'+
+ '<div class="lineup">'+lineupSummary(ty)+'</div><div class="tw"><table><thead><tr><th class="name">Jugador</th><th>Edad</th><th>Liga</th><th>Amistoso</th><th>Recibe</th><th>Nivel actual</th>'+heads+'<th class="num">Semanas</th><th>Fecha</th><th>Llega a</th><th class="num" title="Ascensos en 16 semanas">16 sem</th></tr></thead><tbody>'+body+'</tbody></table></div>'+
+ legend()+'<p class="note">Las columnas +1, +2… indican las semanas de cada ascenso y son acumulativas en “Semanas”. Cada alineación se guarda por tipo de entrenamiento: al cambiar de tipo puedes planear otra.</p>'}
+function posSel(name,slot,val,tid){return '<select aria-label="'+(slot?'Amistoso':'Liga')+' '+esc(name)+'" data-pos="'+esc(name)+'" data-slot="'+slot+'" data-t="'+tid+'">'+opt('','—',val)+POS.map(function(p){return opt(p,p,val)}).join('')+'</select>'}
+function dec(x){return String(x).replace(/(\d)\.(\d)/g,'$1,$2')}
+function kpi(b,s){return '<div class="kpi"><b>'+esc(dec(b))+'</b><span>'+esc(dec(s))+'</span></div>'}
+function legend(){return '<div class="legend"><span>Semanas por nivel:</span><span class="wk fast">≤6</span><span class="wk mid">7–10</span><span class="wk slow">11–16</span><span class="wk vslow">&gt;16</span><span style="margin-left:8px">Recibe:</span><span class="chip c100">100%</span><span class="chip c50">50%</span><span class="chip cos">ósmosis</span><span class="chip c0">0%</span></div>'}
+function typeNote(ty){var a='Completo: '+ty.full.join(', ');if(ty.part.length)a+='. Parcial 50%: '+ty.part.join(', ');if(ty.os)a+='. Ósmosis '+dec(Math.round(ty.os*1000)/10)+'%: el resto de posiciones';if(ty.bonus)a+='. Portero y lanzador reciben 25% extra';if(ty.id==='sh')a+='. El app calcula Anotación; la mejora secundaria de Balón parado no se estima';return a+'.'}
+function renderCmp(){var ideal=S.cmpMode==='ideal',pl=S.players.filter(function(p){return ageOf(p)<30}).slice().sort(function(a,b){return b.tsi-a.tsi});
+ var heads=TY.map(function(t){return '<th class="num" title="'+esc(t.n)+'"><button class="act" data-goto="'+t.id+'" style="padding:2px 5px;font-size:11px">'+esc(short(t))+'</button></th>'}).join('');
+ var rows=pl.map(function(p){var c=TY.map(function(t){var x=stepWeeks(p,t,1,timeFor(p,t,ideal));return '<td class="num">'+(x[0]?'<span class="wk '+wkCls(x[0].w)+'" title="'+esc(t.n)+': '+p.s[t.sk]+'→'+(p.s[t.sk]+1)+'">'+x[0].w+'</span>':'—')+'</td>'}).join('');return '<tr><td class="name" title="'+esc(p.name)+'">'+esc(p.name)+'</td><td>'+fmtAge(ageOf(p))+'</td>'+c+'</tr>'}).join('');
+ return '<h2>¿Qué entrenamiento le conviene a cada jugador?</h2><p class="note">Semanas para subir el siguiente nivel de la habilidad que mejora cada entrenamiento. Pulsa un tipo para abrirlo en el Simulador. Excluye jugadores de 30 años o más.</p>'+
+ '<div class="controls"><label for="cmpM">Calcular con<select id="cmpM" data-ui="cmpMode">'+opt('plan','La alineación planificada',S.cmpMode)+opt('ideal','Cada jugador al 100%',S.cmpMode)+'</select></label></div>'+
+ '<div class="tw"><table><thead><tr><th class="name">Jugador</th><th>Edad</th>'+heads+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+legend()}
+function short(t){return{gk:'Portería',def:'Defensa',pm:'Jugadas',wg:'Lateral',pa:'Pases',sc:'Anotación',sp:'B. parado',dp:'Def. grupal',wa:'Lat.+Del.',tp:'Pases DEF+MED',sh:'Tiro y BP'}[t.id]}
+function renderPlan(){var sim=simulate(),cum=0,colors=['var(--pitch)','#2d7a4d','#6d7f3a','#2a6f7a','#7a5b2d','#5a4d86'];
+ var bl=S.blocks.map(function(b,i){var from=cum;cum+=b.w;return '<div class="block"><select aria-label="Tipo de entrenamiento" data-b="'+i+'" data-bf="t">'+typeOpts(b.t)+'</select><label>Semanas <input type="number" min="1" max="200" data-b="'+i+'" data-bf="w" value="'+b.w+'"></label><span class="dates">'+fmt(addWeeks(S.set.start,from))+' a '+fmt(addWeeks(S.set.start,cum-1))+'</span><button class="act" data-goto="'+b.t+'">Alineación</button><button class="act" data-bmove="'+i+'" data-dir="-1" aria-label="Subir bloque">↑</button><button class="act" data-bmove="'+i+'" data-dir="1" aria-label="Bajar bloque">↓</button><button class="act" data-bdel="'+i+'">Quitar</button></div>'}).join('');
+ cum=0;var total=sim.weeks||1;
+ var gantt=S.blocks.map(function(b,i){var w=b.w/total*100;return '<div style="width:'+w+'%;background:'+colors[i%colors.length]+'" title="'+esc(TYM[b.t].n)+'"><b>'+esc(short(TYM[b.t]))+'</b><span>'+b.w+' sem</span></div>'}).join('');
+ var ticks='';for(var w=0;w<=total;w+=16){var l=w/total*100;ticks+='<span style="left:'+l+'%">'+(w?w:'0')+'</span>'}
+ var byP={};sim.ev.forEach(function(e){(byP[e.name]=byP[e.name]||{})[e.sk]=(byP[e.name][e.sk]||0)+1});
+ var players=S.players.filter(function(p){return byP[p.name]}).sort(function(a,b){return b.tsi-a.tsi});
+ var res=players.map(function(p){var ch=Object.keys(byP[p.name]).map(function(k){var r=sim.res[p.name].s[k];return '<span class="chip c100">'+esc(SKN[k])+' '+p.s[k]+'→'+r+'</span>'}).join(' ');return '<tr><td class="name">'+esc(p.name)+'</td><td>'+fmtAge(ageOf(p,sim.weeks))+'</td><td style="white-space:normal">'+ch+'</td></tr>'}).join('');
+ var evs=sim.ev.filter(function(e){return !S.evp||e.name===S.evp}).map(function(e){return '<tr><td>'+dateAt(e.wk)+'</td><td class="num">'+e.wk+'</td><td class="name">'+esc(e.name)+'</td><td>'+esc(SKN[e.sk])+' <span class="lvl">'+e.lvl+' <em>'+esc(lvName(e.lvl))+'</em></span></td></tr>'}).join('');
+ return '<h2>Cronograma por bloques</h2><p class="note">Encadena entrenamientos. El progreso de cada habilidad se conserva entre bloques y la edad avanza una semana por cada entrenamiento.</p><div class="blocks">'+bl+'</div><button class="act pri" id="addB">Añadir bloque</button>'+
+ '<div class="gantt">'+gantt+'</div><div class="ticks">'+ticks+'</div><div class="kpis" style="margin-top:12px">'+kpi(sim.weeks+' sem','Duración ('+(Math.round(sim.weeks/16*10)/10)+' temporadas)')+kpi(dateAt(sim.weeks||1),'Último entrenamiento')+kpi(sim.ev.length,'Ascensos previstos')+'</div>'+
+ '<div class="two"><div><h3>Resultado por jugador</h3><div class="tw scroll"><table><thead><tr><th class="name">Jugador</th><th>Edad final</th><th>Cambios</th></tr></thead><tbody>'+(res||'<tr><td colspan="3">Sin ascensos previstos.</td></tr>')+'</tbody></table></div></div>'+
+ '<div><h3>Calendario de ascensos</h3><div class="controls" style="margin-bottom:6px"><label for="evp">Jugador<select id="evp" data-ui="evp">'+opt('','Todos',S.evp)+players.map(function(p){return opt(p.name,p.name,S.evp)}).join('')+'</select></label></div><div class="tw scroll"><table><thead><tr><th>Fecha</th><th class="num">Sem</th><th class="name">Jugador</th><th>Sube a</th></tr></thead><tbody>'+(evs||'<tr><td colspan="4">Sin ascensos.</td></tr>')+'</tbody></table></div></div></div>'}
+function renderTeam(){var rows=S.players.map(function(p,i){return '<tr><td class="name" title="'+esc(p.name)+'">'+esc(p.name)+'</td><td><input type="number" aria-label="Años" min="15" max="70" style="width:55px" data-p="'+i+'" data-f="y" value="'+p.y+'"></td><td><input type="number" aria-label="Días" min="0" max="111" style="width:58px" data-p="'+i+'" data-f="d" value="'+p.d+'"></td><td class="num">'+p.tsi.toLocaleString('es-PE')+'</td><td>'+esc(p.spec)+'</td>'+SK.map(function(k){return '<td><input type="number" aria-label="'+k[1]+'" min="0" max="20" style="width:52px" data-p="'+i+'" data-f="'+k[0]+'" value="'+p.s[k[0]]+'"></td>'}).join('')+'<td><input type="radio" name="taker" aria-label="Lanzador" data-taker="'+esc(p.name)+'"'+(S.taker===p.name?' checked':'')+'></td></tr>'}).join('');
+ return '<h2>Plantilla</h2><p class="note">Datos leídos de Hattrick el 03-11-2026. Actualízalos cada semana para mantener los cálculos al día; “Lanz.” marca al lanzador de balón parado.</p><div class="tw scroll" style="max-height:520px"><table><thead><tr><th class="name">Jugador</th><th>Años</th><th>Días</th><th class="num">TSI</th><th>Especialidad</th>'+SK.map(function(k){return '<th>'+k[1]+'</th>'}).join('')+'<th>Lanz.</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+ '<div class="two" style="margin-top:14px"><div><h3>Actualizar desde Hattrick</h3><p class="note">En la página Jugadores, selecciona todo (Ctrl+A), copia y pega aquí. Se actualizan edad, TSI y habilidades; las alineaciones se conservan por nombre.</p><textarea id="imp" placeholder="Pega aquí el texto de la página Jugadores"></textarea><p><button class="act pri" id="doImp">Actualizar plantilla</button></p></div>'+
+ '<div><h3>Copia de seguridad</h3><p class="note">Copia el texto y guárdalo; para restaurar, pégalo en el mismo cuadro y pulsa Restaurar.</p><textarea id="bak"></textarea><p style="display:flex;gap:8px;flex-wrap:wrap"><button class="act" id="genBak">Generar copia</button><button class="act" id="copyBak">Copiar</button><button class="act" id="restBak">Restaurar</button></p></div></div><div class="msg" id="msg" role="status"></div>'}
+function renderMet(){var ref=[['gk',3],['wg',3],['sc',4],['pm',4],['wa',5],['def',5],['pa',4],['tp',5],['dp',10],['sh',7]];var base={ass:10,coach:1,stam:10,int:100,cal:100};
+ var rows=ref.map(function(r){var t=TYM[r[0]],m=1/gain(7,17,t,1,base);return '<tr><td>'+esc(t.n)+'</td><td class="num">'+t.k+'</td><td class="num">'+m.toFixed(1)+'</td><td class="num">'+r[1]+'</td></tr>'}).join('');
+ return '<h2>Cómo se calcula</h2><p>Cada semana el jugador suma una fracción de nivel. Asciende cuando la suma llega a 1, por eso las duraciones son semanas enteras.</p>'+
+ '<div class="formula">avance = k × tiempo × 54/(edad+37) × (1+0,035×asistentes) × entrenador × (1−condición) × intensidad × factorNivel × 0,01\nfactorNivel = 16,289·e^(−0,1396·nivel) si nivel &lt; 9;  54,676/nivel − 1,438 si nivel ≥ 9</div>'+
+ '<h3>Comparación con la tabla de la wiki</h3><p class="note">Condiciones: 17 años, 7→8, intensidad 100%, condición 10%, entrenador al 100% y 10 niveles de asistentes. La wiki usa condición 15% y puede reflejar versiones anteriores del juego.</p><div class="tw" style="max-width:560px"><table><thead><tr><th>Entrenamiento</th><th class="num">k</th><th class="num">Modelo (sem)</th><th class="num">Wiki (sem)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+ '<h3>Qué tomar en cuenta</h3><ul><li>Es una estimación. Hattrick no publica su fórmula exacta, y la wiki advierte que 5 semanas pueden ser 4 o 6 en casos individuales.</li><li>Hattrick no muestra el avance dentro de un nivel. Usa “Avance ya acumulado” para probar escenarios; con 0% obtienes el plazo más largo.</li><li>Se asume que cada jugador alineado juega 90 minutos en su posición. Con dos partidos cuenta el de mayor efecto.</li><li>No se calcula la caída por edad, que afecta a los veteranos, ni lesiones, walkovers o sanciones.</li><li>En “Anotación y balón parado” se estima solo Anotación.</li></ul>'+
+ '<h3>Fuentes</h3><ul><li><a href="https://github.com/ho-dev/HattrickOrganizer/blob/master/src/main/java/core/training/WeeklyTrainingType.java" target="_blank" rel="noopener">Hattrick Organizer, WeeklyTrainingType</a> (fórmula y constantes)</li><li><a href="https://wiki.hattrick.org/wiki/Training" target="_blank" rel="noopener">Hattrick Wiki, Training</a> (tipos y duración de referencia)</li><li>Hattrick, páginas Entrenamiento y Cuerpo técnico de tu club (92%, +35%, 90/10)</li></ul>'}
+function render(){renderSettings();renderTabs();var m=document.getElementById('main'),t=S.tab;m.innerHTML=t==='sim'?renderSim():t==='cmp'?renderCmp():t==='plan'?renderPlan():t==='team'?renderTeam():renderMet();save()}
+
+/* ===== Importador ===== */
+function parsePlayers(txt){var out=[],re=/Edad\s+(\d+)\s+años\s+y\s+(\d+)\s+días/g,m,idx=[];while(m=re.exec(txt))idx.push({i:m.index,y:+m[1],d:+m[2],end:re.lastIndex});
+ idx.forEach(function(a,n){var next=idx[n+1]?idx[n+1].i:txt.length,after=txt.slice(a.end,next),prevEnd=n?idx[n-1].end:0,before=txt.slice(prevEnd,a.i);
+  var parts=before.split(/\n/).map(function(x){return x.trim()}).filter(Boolean),ti=-1;for(var j=parts.length-1;j>=0;j--){if(/^Tiene\b/.test(parts[j])){ti=j;break}}if(ti<1)return;
+  var c=ti-1;if(/^(POR|DL|DC|LAT|MC|DEL)$/.test(parts[c]))c--;if(c<0)return;var name=parts[c].replace(/\s+\([^)]*\)/g,function(x){return x});
+  var o={name:name,y:a.y,d:a.d,tsi:0,spec:'-',role:'',s:{}},t=/TSI\s+([\d\s.,]+)/.exec(after);if(t)o.tsi=+t[1].replace(/\D/g,'')||0;var e=/Especialidad\s+([^\n]+)/.exec(after);if(e)o.spec=e[1].trim();
+  var ok=0;SK.forEach(function(k){var r=new RegExp(k[1]+'\\s+(?:[^\\d\\n]*\\n?\\s*)*?(\\d+)','m').exec(after);if(r){o.s[k[0]]=+r[1];ok++}else o.s[k[0]]=0});if(ok===7)out.push(o)});return out}
+function importPlayers(list){var old={};S.players.forEach(function(p){old[p.name]=p});list.forEach(function(p){var q=old[p.name];p.a=q?q.a:'';p.b=q?q.b:'';if(!S.base[p.name])S.base[p.name]=['','']});S.players=list;return list.length}
+
+/* ===== Sugerencia de amistoso: la liga queda igual; ocupa primero las posiciones de entrenamiento completo. */
+function suggestFriendly(tid){var ty=TYM[tid],l=lineup(tid),form=ty.f,order=POS.slice().sort(function(a,b){return posValue(ty,b)-posValue(ty,a)});
+ S.players.forEach(function(p){if(l[p.name])l[p.name][1]='';else l[p.name]=['','']});
+ var pool=S.players.filter(function(p){return ageOf(p)<30&&(p.s.pm+p.s.def+p.s.wg+p.s.pa+p.s.sc+p.s.gk>0)}).slice().sort(function(a,b){function g(p){var v=posValue(ty,l[p.name][0]);return v>=1?2:l[p.name][0]?0:1}return (g(a)-g(b))||(b.tsi-a.tsi)}),used={};
+ order.forEach(function(pos){var need=form[pos]||0;pool.forEach(function(p){if(need>0&&!used[p.name]&&(pos!=='POR'||p.s.gk>=3)){l[p.name][1]=pos;used[p.name]=1;need--}})})}
+
+/* ===== Eventos ===== */
+function msg(t){var e=document.getElementById('msg');if(e)e.textContent=t}
+document.addEventListener('change',function(ev){var e=ev.target,d=e.dataset;
+ if(d.set){S.set[d.set]=d.set==='start'?e.value:+e.value;if(d.set==='ass')S.set.ass=Math.max(0,Math.min(10,S.set.ass));render();return}
+ if(d.ui){S[d.ui]=d.ui==='levels'?+e.value:e.value;render();return}
+ if(d.pos){lineup(d.t)[d.pos]=lineup(d.t)[d.pos]||['',''];lineup(d.t)[d.pos][+d.slot]=e.value;render();return}
+ if(d.bf!==undefined&&d.b!==undefined){var b=S.blocks[+d.b];b[d.bf]=d.bf==='w'?Math.max(1,Math.min(200,+e.value||1)):e.value;render();return}
+ if(d.p!==undefined){var p=S.players[+d.p];if(d.f==='y'||d.f==='d')p[d.f]=+e.value;else p.s[d.f]=Math.max(0,Math.min(20,+e.value));render();return}
+ if(d.taker!==undefined){S.taker=d.taker;render()}});
+document.addEventListener('click',function(ev){var e=ev.target,d=e.dataset||{};
+ if(d.tab){S.tab=d.tab;render();return}
+ if(d.goto){S.type=d.goto;S.tab='sim';render();return}
+ if(e.id==='suggest'){suggestFriendly(S.type);render();return}
+ if(e.id==='resetL'){S.lineups[S.type]=JSON.parse(JSON.stringify(S.base));render();return}
+ if(e.id==='addB'){S.blocks.push({t:S.type,w:8});render();return}
+ if(d.bdel!==undefined){S.blocks.splice(+d.bdel,1);render();return}
+ if(d.bmove!==undefined){var i=+d.bmove,j=i+ +d.dir;if(j>=0&&j<S.blocks.length){var x=S.blocks[i];S.blocks[i]=S.blocks[j];S.blocks[j]=x}render();return}
+ if(e.id==='doImp'){var l=parsePlayers(document.getElementById('imp').value);if(!l.length){msg('No encontré jugadores. Copia la página Jugadores completa con Ctrl+A y vuelve a pegarla.');return}var n=importPlayers(l);render();msg(n+' jugadores actualizados.');return}
+ if(e.id==='genBak'){document.getElementById('bak').value=JSON.stringify(S);msg('Copia generada.');return}
+ if(e.id==='copyBak'){var t=document.getElementById('bak');if(!t.value)t.value=JSON.stringify(S);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.value).then(function(){msg('Copiado.')},function(){t.select();msg('Texto seleccionado: cópialo con Ctrl+C.')})}else{t.select();msg('Texto seleccionado: cópialo con Ctrl+C.')}return}
+ if(e.id==='restBak'){try{var v=JSON.parse(document.getElementById('bak').value);if(!v.players)throw 0;S=Object.assign(defaults(),v);render();msg('Copia restaurada.')}catch(er){msg('El texto no es una copia válida. Pulsa Generar copia para obtener el formato correcto.')}}
+});
+render();
+</script>
+
+</html>
