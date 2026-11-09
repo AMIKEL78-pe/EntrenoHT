@@ -84,6 +84,7 @@ code{font:12.5px var(--data);background:var(--surface2);padding:1px 4px;border-r
 .three{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:18px;margin-top:14px}.three>div{min-width:0}
 a{color:var(--accent)}
 ul{padding-left:20px;margin:6px 0;max-width:75ch}li{margin-bottom:4px}
+.bar{display:inline-block;width:90px;height:8px;background:var(--surface2);border:1px solid var(--line);border-radius:4px;vertical-align:middle;overflow:hidden;margin-right:6px}.bar i{display:block;height:100%;background:var(--full)}
 .msg{min-height:18px;font-size:13px;color:var(--accent);margin:6px 0}
 @media (prefers-reduced-motion:no-preference){button{transition:color .1s,border-color .1s}}
 </style>
@@ -121,7 +122,7 @@ var TYM={};TY.forEach(function(t){TYM[t.id]=t});
 var COACH=[[.7343,'73%'],[.8324,'83%'],[.92,'92%'],[1,'100%'],[1.0375,'104%']];
 function nextThu(){var d=new Date();while(d.getDay()!==4)d.setDate(d.getDate()+1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
 function defaults(){return {club:'',set:{coach:1,ass:10,int:100,stam:10,start:nextThu(),prog:0,cal:100},players:[],base:{},lineups:{},taker:'',type:'pm',levels:3,filter:'all',sort:'weeks',cmpMode:'plan',tab:'team',
- blocks:[{t:'pm',w:8}],evp:''}}
+ blocks:[{t:'pm',w:8}],evp:'',hist:[]}}
 var KEY='ht-plan-entrenamiento-v2',S=defaults();
 try{var sv=localStorage.getItem(KEY);if(sv){var pj=JSON.parse(sv);S=Object.assign(defaults(),pj)}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}scheduleFolderSave()}
@@ -133,7 +134,7 @@ function gain(level,age,ty,time,s){s=s||S.set;return Math.min(1,ty.k*time*(54/(a
 function lineup(tid){if(!S.lineups[tid])S.lineups[tid]=JSON.parse(JSON.stringify(S.base));return S.lineups[tid]}
 function posValue(ty,pos){if(!pos)return 0;if(ty.bonus&&pos==='POR')return 1.25;if(ty.full.indexOf(pos)>=0)return 1;if(ty.part.indexOf(pos)>=0)return .5;return ty.os}
 function timeFor(p,ty,ideal){if(ideal)return 1;var l=lineup(ty.id)[p.name]||['',''];var v=Math.max(posValue(ty,l[0]),posValue(ty,l[1]));if(ty.bonus&&S.taker===p.name&&(l[0]||l[1]))v=1.25;return v}
-function stepWeeks(p,ty,n,time){var r=[],lvl=p.s[ty.sk],pr=S.set.prog/100,w=0;if(!time)return r;
+function stepWeeks(p,ty,n,time){var r=[],lvl=p.s[ty.sk],pr=progFor(p,ty.sk),w=0;if(!time)return r;
  for(var i=0;i<n;i++){var c=0;while(pr<1&&w<780){pr+=gain(lvl,ageOf(p,w),ty,time);w++;c++}if(pr<1)break;pr-=1;lvl++;r.push({w:c,total:w,lvl:lvl})}return r}
 function addWeeks(iso,w){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+7*w);return d}
 function fmt(d){return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear()}
@@ -145,9 +146,36 @@ function wkCls(w){return w<=6?'fast':w<=10?'mid':w<=16?'slow':'vslow'}
 function esc(x){return String(x).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function lvName(l){return LV[l]||('nivel '+l)}
 /* Simula la cadena de bloques */
-function simulate(){var res={},ev=[],wk=0;S.players.forEach(function(p){res[p.name]={s:Object.assign({},p.s),pr:{gk:0,def:0,pm:0,wg:0,pa:0,sc:0,sp:0}};SK.forEach(function(k){res[p.name].pr[k[0]]=S.set.prog/100})});
+function simulate(){var res={},ev=[],wk=0;S.players.forEach(function(p){res[p.name]={s:Object.assign({},p.s),pr:{gk:0,def:0,pm:0,wg:0,pa:0,sc:0,sp:0}};SK.forEach(function(k){res[p.name].pr[k[0]]=progFor(p,k[0])})});
  S.blocks.forEach(function(b){var ty=TYM[b.t];for(var i=0;i<b.w;i++){S.players.forEach(function(p){var t=timeFor(p,ty);if(!t)return;var r=res[p.name];r.pr[ty.sk]+=gain(r.s[ty.sk],ageOf(p,wk),ty,t);if(r.pr[ty.sk]>=1){r.pr[ty.sk]-=1;r.s[ty.sk]++;ev.push({wk:wk+1,name:p.name,sk:ty.sk,lvl:r.s[ty.sk],ty:ty.n})}});wk++}});
  return{res:res,ev:ev,weeks:wk}}
+
+/* ===== Historial semanal: cada carga de plantilla guarda una foto con fecha ===== */
+function isoD(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function fmtI(iso){return fmt(new Date(iso+'T12:00:00'))}
+function wkBetween(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/6048e5)}
+function hist(){if(!Array.isArray(S.hist))S.hist=[];return S.hist}
+function snapshot(date){date=date||isoD(new Date());var ps={};S.players.forEach(function(p){ps[p.name]={y:p.y,d:p.d,s:Object.assign({},p.s)}});
+ var h=hist(),snap={date:date,type:S.type,players:ps},i=-1;h.forEach(function(x,j){if(x.date===date)i=j});
+ if(i>=0){snap.type=h[i].type||S.type;h[i]=snap}else h.push(snap);h.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0});return date}
+function typeForSkill(sk){if(TYM[S.type].sk===sk)return TYM[S.type];for(var i=0;i<TY.length;i++)if(TY[i].sk===sk)return TY[i]}
+/* Avance estimado dentro del nivel actual: suma lo entrenado desde el último ascenso registrado. */
+function levelProgress(p,sk){var h=hist();if(!h.length)return null;var lvl=p.s[sk],start=-1;
+ for(var i=h.length-1;i>=0;i--){var x=h[i].players[p.name];if(!x||x.s[sk]!==lvl)break;start=i}
+ if(start<0)return{acc:0,weeks:0,trained:0,known:true,from:isoD(new Date()),fresh:true};
+ var prev=start>0&&h[start-1].players[p.name],known=!!(prev&&prev.s[sk]<lvl),acc=0,weeks=0,tw=0;
+ for(var j=start+1;j<h.length;j++){var w=wkBetween(h[j-1].date,h[j].date),ty=TYM[h[j].type]||TYM[S.type];weeks+=w;
+  if(ty.sk===sk){var t=timeFor(p,ty);for(var k=0;k<w;k++){acc+=gain(lvl,ageOf(p,-(weeks-k)),ty,t)}if(t)tw+=w}}
+ return{acc:Math.min(acc,.99),weeks:weeks,trained:tw,known:known,from:h[start].date}}
+function progFor(p,sk){if(S.set.prog>=0)return S.set.prog/100;var r=levelProgress(p,sk);return r?Math.min(r.acc,.95):0}
+function modelW(lvl,age,ty,t){var s=Object.assign({},S.set,{cal:100}),pr=0,n=0;if(!t)return 0;while(pr<1&&n<300){pr+=gain(lvl,age+n*7/112,ty,t,s);n++}return n}
+/* Cambios de nivel detectados entre fotos consecutivas, con semanas reales vs. modelo */
+function histEvents(){var h=hist(),ev=[],lastUp={};
+ for(var i=1;i<h.length;i++){var a=h[i-1],b=h[i];Object.keys(b.players).forEach(function(n){var pa=a.players[n],pb=b.players[n];if(!pa)return;
+  SK.forEach(function(k){var sk=k[0],d=pb.s[sk]-pa.s[sk];if(!d)return;var e={date:b.date,name:n,sk:sk,from:pa.s[sk],to:pb.s[sk],up:d>0,real:null,model:null},key=n+'|'+sk;
+   if(d>0){var lu=lastUp[key];if(lu&&lu.to===pa.s[sk]){e.real=wkBetween(lu.date,b.date);var cur=null;S.players.forEach(function(p){if(p.name===n)cur=p});var ty=typeForSkill(sk),t=cur?timeFor(cur,ty):0;e.model=modelW(pa.s[sk],ageOf(pa),ty,t||1)}lastUp[key]=e}
+   ev.push(e)})})}
+ return ev}
 
 /* ===== Interfaz ===== */
 function opt(v,l,sel){return '<option value="'+esc(v)+'"'+(String(v)===String(sel)?' selected':'')+'>'+esc(l)+'</option>'}
@@ -157,12 +185,12 @@ function renderSettings(){var s=S.set,h='';
  h+='<label for="sInt">Intensidad %<input id="sInt" data-set="int" type="number" min="1" max="100" value="'+s.int+'"></label>';
  h+='<label for="sSta">Condición %<input id="sSta" data-set="stam" type="number" min="0" max="90" value="'+s.stam+'"></label>';
  h+='<label for="sSt">Próximo entrenamiento<input id="sSt" data-set="start" type="date" value="'+s.start+'"></label>';
- h+='<label for="sPr">Avance ya acumulado<select id="sPr" data-set="prog">'+[[0,'0% (recién subido)'],[25,'25%'],[50,'50%'],[75,'75%']].map(function(o){return opt(o[0],o[1],s.prog)}).join('')+'</select></label>';
+ h+='<label for="sPr">Avance ya acumulado<select id="sPr" data-set="prog">'+[[-1,'Según historial semanal'],[0,'0% (recién subido)'],[25,'25%'],[50,'50%'],[75,'75%']].map(function(o){return opt(o[0],o[1],s.prog)}).join('')+'</select></label>';
  document.getElementById('settings').innerHTML=h;
  document.getElementById('ttl').textContent='Plan de Entrenamiento'+(S.club?' · '+S.club:'');
  document.getElementById('sub').textContent='Eficiencia de la habilidad '+Math.round((1-s.stam/100)*s.coach*100)+'% · '+S.players.length+' jugadores';
 }
-var TABS=[['sim','Simulador'],['cmp','Comparar'],['plan','Cronograma'],['team','Plantilla'],['met','Método']];
+var TABS=[['sim','Simulador'],['cmp','Comparar'],['plan','Cronograma'],['adv','Avance semanal'],['team','Plantilla'],['met','Método']];
 function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(function(t){return '<button role="tab" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+'</button>'}).join('')}
 function typeOpts(sel){return TY.map(function(t){return opt(t.id,t.n,sel)}).join('')}
 
@@ -224,9 +252,41 @@ function renderPlan(){var sim=simulate(),cum=0,colors=['var(--pitch)','#2d7a4d',
  '<div class="gantt">'+gantt+'</div><div class="ticks">'+ticks+'</div><div class="kpis" style="margin-top:12px">'+kpi(sim.weeks+' sem','Duración ('+(Math.round(sim.weeks/16*10)/10)+' temporadas)')+kpi(dateAt(sim.weeks||1),'Último entrenamiento')+kpi(sim.ev.length,'Ascensos previstos')+'</div>'+
  '<div class="two"><div><h3>Resultado por jugador</h3><div class="tw scroll"><table><thead><tr><th class="name">Jugador</th><th>Edad final</th><th>Cambios</th></tr></thead><tbody>'+(res||'<tr><td colspan="3">Sin ascensos previstos.</td></tr>')+'</tbody></table></div></div>'+
  '<div><h3>Calendario de ascensos</h3><div class="controls" style="margin-bottom:6px"><label for="evp">Jugador<select id="evp" data-ui="evp">'+opt('','Todos',S.evp)+players.map(function(p){return opt(p.name,p.name,S.evp)}).join('')+'</select></label></div><div class="tw scroll"><table><thead><tr><th>Fecha</th><th class="num">Sem</th><th class="name">Jugador</th><th>Sube a</th></tr></thead><tbody>'+(evs||'<tr><td colspan="4">Sin ascensos.</td></tr>')+'</tbody></table></div></div></div>'}
+function renderAdv(){var ty=TYM[S.type],h=hist(),ev=histEvents(),today=isoD(new Date());
+ var head='<h2>Avance semanal</h2><p class="note">Cada vez que cargas la plantilla (o pulsas “Registrar semana”) se guarda una foto con fecha de los niveles. Comparando fotos se ven los ascensos reales y se estima cuánto lleva cada jugador dentro de su nivel actual, que Hattrick no muestra.</p>'+
+ '<div class="controls"><label for="advType">Entrenamiento<select class="big" id="advType" data-ui="type">'+typeOpts(S.type)+'</select></label><label for="regDate">Fecha del registro<input id="regDate" type="date" value="'+today+'"></label><button class="act pri" id="regWeek">Registrar semana</button></div><div class="msg" id="msg" role="status"></div>';
+ if(!h.length)return head+'<div class="empty"><p>Aún no hay semanas registradas. Pulsa <b>Registrar semana</b> ahora y, después de cada entrenamiento, vuelve a cargar la plantilla desde Hattrick. Con dos o más registros verás el avance.</p></div>';
+ var ups=ev.filter(function(e){return e.up}),cmp=ups.filter(function(e){return e.real}),sr=0,sm=0;cmp.forEach(function(e){sr+=e.real;sm+=e.model});
+ var calS=cmp.length?Math.max(40,Math.min(160,Math.round(sm/sr*100))):null;
+ var k=kpi(h.length,'Semanas registradas (desde '+fmtI(h[0].date)+')')+kpi(ups.length,'Ascensos reales detectados')+kpi(ev.length-ups.length,'Bajadas detectadas')+
+  kpi(cmp.length?Math.round(sr/cmp.length*10)/10+' / '+Math.round(sm/cmp.length*10)/10+' sem':'—','Semanas por ascenso: real / modelo');
+ var cal=calS!==null?'<p class="note">Con '+cmp.length+' ascenso(s) medidos de punta a punta, la calibración sugerida es <b>'+calS+'%</b> (actual '+S.set.cal+'%). <button class="act" id="applyCal" data-cal="'+calS+'">Aplicar '+calS+'%</button>'+(S.set.cal!==100?' <button class="act" id="applyCal100" data-cal="100">Volver a 100%</button>':'')+'</p>':'<p class="note">Cuando un jugador suba dos veces la misma habilidad dentro del historial, se comparará la duración real con la del modelo para calibrarlo.</p>';
+ /* 1. Avance dentro del nivel */
+ var rows=S.players.map(function(p){var t=timeFor(p,ty),r=levelProgress(p,ty.sk)||{acc:0,weeks:0,trained:0,known:false,from:h[0].date},lvl=p.s[ty.sk],n=0,pr=r.acc;
+  if(t)while(pr<1&&n<300){pr+=gain(lvl,ageOf(p,n),ty,t);n++}return{p:p,t:t,r:r,lvl:lvl,n:t?n:null}}).filter(function(x){return x.t||x.r.trained});
+ rows.sort(function(a,b){return (a.n===null?1e9:a.n)-(b.n===null?1e9:b.n)});
+ var b1=rows.map(function(x){var pc=Math.round(x.r.acc*100);return '<tr><td class="name" title="'+esc(x.p.name)+'">'+esc(x.p.name)+'</td><td><span class="chip '+chipCls(x.t)+'">'+pct(x.t)+'</span></td><td class="lvl">'+x.lvl+' <em>'+esc(lvName(x.lvl))+'</em></td>'+
+  '<td>'+(x.r.known?fmtI(x.r.from):'antes del '+fmtI(x.r.from))+'</td><td class="num">'+x.r.trained+'</td><td><span class="bar"><i style="width:'+pc+'%"></i></span>'+(x.r.known?'':'≥ ')+pc+'%</td>'+
+  '<td class="num">'+(x.n===null?'—':'<span class="wk '+wkCls(x.n)+'">'+x.n+'</span>')+'</td><td>'+(x.n===null?'—':dateAt(x.n))+'</td></tr>'}).join('');
+ /* 2. Semana a semana */
+ var cols=h.slice(-12),cIdx=h.length-cols.length;
+ var b2=S.players.slice().sort(function(a,b){return b.tsi-a.tsi}).map(function(p){var ch=0,cells=cols.map(function(c,i){var x=c.players[p.name],pv=h[cIdx+i-1]&&h[cIdx+i-1].players[p.name];if(!x)return '<td class="num">—</td>';var v=x.s[ty.sk],d=pv?v-pv.s[ty.sk]:0;if(d)ch+=d;
+   return '<td class="num">'+(d>0?'<span class="chip c100" title="Subió a '+esc(lvName(v))+'">▲ '+v+'</span>':d<0?'<span class="chip cwarn" title="Bajó a '+esc(lvName(v))+'">▼ '+v+'</span>':v)+'</td>'}).join('');
+  return '<tr><td class="name" title="'+esc(p.name)+'">'+esc(p.name)+'</td>'+cells+'<td class="num"><b>'+(ch>0?'+':'')+ch+'</b></td></tr>'}).join('');
+ var h2=cols.map(function(c){return '<th class="num" title="'+esc(TYM[c.type]?TYM[c.type].n:'')+'">'+fmtI(c.date).slice(0,5)+'<br><span style="font-weight:400">'+esc(TYM[c.type]?short(TYM[c.type]):'')+'</span></th>'}).join('');
+ /* 3. Ascensos registrados */
+ var b3=ev.slice().reverse().map(function(e){var df=e.real&&e.model?e.real-e.model:null;return '<tr><td>'+fmtI(e.date)+'</td><td class="name">'+esc(e.name)+'</td><td>'+esc(SKN[e.sk])+' <span class="lvl">'+e.from+'→'+e.to+' <em>'+esc(lvName(e.to))+'</em></span>'+(e.up?'':' <span class="chip cwarn">bajada</span>')+'</td><td class="num">'+(e.real?'~'+e.real:'—')+'</td><td class="num">'+(e.model||'—')+'</td><td class="num">'+(df===null?'—':(df>0?'+':'')+df)+'</td></tr>'}).join('');
+ /* 4. Registros */
+ var b4=h.map(function(c,i){var n=ev.filter(function(e){return e.date===c.date&&e.up}).length;return '<tr><td><input type="date" aria-label="Fecha" data-hd="'+i+'" value="'+c.date+'"></td><td><select style="max-width:170px" aria-label="Entrenamiento de esa semana" data-ht="'+i+'">'+typeOpts(c.type)+'</select></td><td class="num">'+Object.keys(c.players).length+'</td><td class="num">'+n+'</td><td><button class="act" data-hdel="'+i+'">Quitar</button></td></tr>'}).join('');
+ return head+'<div class="kpis">'+k+'</div>'+cal+
+ '<h3>Avance dentro del nivel · '+esc(SKN[ty.sk])+'</h3><p class="note">Estimación de lo acumulado desde el último ascenso registrado. “≥” indica que el ascenso anterior fue antes del primer registro, así que el avance real es mayor. Para usar estos valores en el Simulador y el Cronograma, elige “Avance ya acumulado: Según historial semanal”.</p>'+
+ '<div class="tw scroll"><table><thead><tr><th class="name">Jugador</th><th>Recibe</th><th>Nivel</th><th>En este nivel desde</th><th class="num">Sem. entrenadas</th><th>Avance estimado</th><th class="num">Faltan</th><th>Ascenso estimado</th></tr></thead><tbody>'+(b1||'<tr><td colspan="8">Nadie recibe este entrenamiento en la alineación actual.</td></tr>')+'</tbody></table></div>'+
+ '<h3>Semana a semana · '+esc(SKN[ty.sk])+'</h3><p class="note">Nivel de la habilidad en cada registro (últimos 12). ▲ marca un ascenso respecto al registro anterior.</p><div class="tw scroll"><table><thead><tr><th class="name">Jugador</th>'+h2+'<th class="num">Total</th></tr></thead><tbody>'+b2+'</tbody></table></div>'+
+ '<div class="two"><div><h3>Cambios de nivel registrados</h3><div class="tw scroll"><table><thead><tr><th>Fecha</th><th class="name">Jugador</th><th>Habilidad</th><th class="num">Real (sem)</th><th class="num">Modelo</th><th class="num">Dif.</th></tr></thead><tbody>'+(b3||'<tr><td colspan="6">Todavía no hay cambios entre registros.</td></tr>')+'</tbody></table></div></div>'+
+ '<div><h3>Registros guardados</h3><p class="note">Indica qué entrenamiento se hizo en la semana que termina en cada registro; eso define qué habilidad acumula avance.</p><div class="tw scroll"><table><thead><tr><th>Fecha</th><th>Entrenamiento</th><th class="num">Jugadores</th><th class="num">Ascensos</th><th></th></tr></thead><tbody>'+b4+'</tbody></table></div></div></div>'}
 function renderEmpty(){return '<div class="empty"><h2>Todavía no hay jugadores</h2><p>Carga tu plantilla para ver cuánto tarda cada jugador en subir de nivel.</p><button class="act pri" data-tab="team">Cargar plantilla</button></div>'}
 function renderTeam(){var has=S.players.length,rows=S.players.map(function(p,i){return '<tr><td class="name" title="'+esc(p.name)+'">'+esc(p.name)+'</td><td><input type="number" aria-label="Años" min="15" max="70" style="width:55px" data-p="'+i+'" data-f="y" value="'+p.y+'"></td><td><input type="number" aria-label="Días" min="0" max="111" style="width:58px" data-p="'+i+'" data-f="d" value="'+p.d+'"></td><td class="num">'+p.tsi.toLocaleString('es-PE')+'</td><td>'+esc(p.spec)+'</td>'+SK.map(function(k){return '<td><input type="number" aria-label="'+k[1]+'" min="0" max="20" style="width:52px" data-p="'+i+'" data-f="'+k[0]+'" value="'+p.s[k[0]]+'"></td>'}).join('')+'<td><input type="radio" name="taker" aria-label="Lanzador" data-taker="'+esc(p.name)+'"'+(S.taker===p.name?' checked':'')+'></td></tr>'}).join('');
- var table=has?'<div class="controls"><label for="club">Nombre del club<input id="club" value="'+esc(S.club)+'"></label></div><p class="note">“Lanz.” marca al lanzador de balón parado. Actualiza los datos cada semana para mantener los cálculos al día.</p><div class="tw scroll" style="max-height:520px"><table><thead><tr><th class="name">Jugador</th><th>Años</th><th>Días</th><th class="num">TSI</th><th>Especialidad</th>'+SK.map(function(k){return '<th>'+k[1]+'</th>'}).join('')+'<th>Lanz.</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="note">Elige una de las dos formas de cargar tus jugadores. Después podrás guardar todo en una carpeta de tu PC.</p>';
+ var table=has?'<div class="controls"><label for="club">Nombre del club<input id="club" value="'+esc(S.club)+'"></label></div><p class="note">“Lanz.” marca al lanzador de balón parado. Carga la plantilla después de cada entrenamiento: cada carga queda registrada en la pestaña Avance semanal.</p><div class="tw scroll" style="max-height:520px"><table><thead><tr><th class="name">Jugador</th><th>Años</th><th>Días</th><th class="num">TSI</th><th>Especialidad</th>'+SK.map(function(k){return '<th>'+k[1]+'</th>'}).join('')+'<th>Lanz.</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<p class="note">Elige una de las dos formas de cargar tus jugadores. Después podrás guardar todo en una carpeta de tu PC.</p>';
  return '<h2>'+(has?'Plantilla':'Carga tu plantilla')+'</h2>'+table+
  '<div class="msg" id="msg" role="status"></div><div class="three"><div><h3>Desde la página Jugadores</h3><p class="note">En Hattrick abre Jugadores, selecciona todo con Ctrl+A, copia y pega aquí.</p><textarea id="imp" placeholder="Pega aquí el texto de la página Jugadores"></textarea><p><button class="act pri" id="doImp">Cargar jugadores</button></p></div>'+
  '<div><h3>Desde un archivo .csv</h3><p class="note">Necesita las columnas Nombre, Años, Días y las 7 habilidades. TSI, Especialidad, Rol, Liga y Amistoso son opcionales. Se aceptan los separadores punto y coma, coma o tabulación.</p><p><label class="act" for="csvFile" style="display:inline-block;cursor:pointer">Elegir archivo .csv</label> <input id="csvFile" type="file" accept=".csv,.txt,text/csv" style="position:absolute;opacity:0;width:1px"></p><p style="display:flex;gap:8px;flex-wrap:wrap"><button class="act" id="dlTpl">Descargar plantilla .csv</button>'+(has?'<button class="act" id="dlCsv">Descargar jugadores .csv</button>':'')+'</p></div>'+
@@ -236,9 +296,9 @@ function renderMet(){var ref=[['gk',3],['wg',3],['sc',4],['pm',4],['wa',5],['def
  return '<h2>Cómo se calcula</h2><p>Cada semana el jugador suma una fracción de nivel. Asciende cuando la suma llega a 1, por eso las duraciones son semanas enteras.</p>'+
  '<div class="formula">avance = k × tiempo × 54/(edad+37) × (1+0,035×asistentes) × entrenador × (1−condición) × intensidad × factorNivel × 0,01\nfactorNivel = 16,289·e^(−0,1396·nivel) si nivel &lt; 9;  54,676/nivel − 1,438 si nivel ≥ 9</div>'+
  '<h3>Comparación con la tabla de la wiki</h3><p class="note">Condiciones: 17 años, 7→8, intensidad 100%, condición 10%, entrenador al 100% y 10 niveles de asistentes. La wiki usa condición 15% y puede reflejar versiones anteriores del juego.</p><div class="tw" style="max-width:560px"><table><thead><tr><th>Entrenamiento</th><th class="num">k</th><th class="num">Modelo (sem)</th><th class="num">Wiki (sem)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
- '<h3>Qué tomar en cuenta</h3><ul><li>Es una estimación. Hattrick no publica su fórmula exacta, y la wiki advierte que 5 semanas pueden ser 4 o 6 en casos individuales.</li><li>Hattrick no muestra el avance dentro de un nivel. Usa “Avance ya acumulado” para probar escenarios; con 0% obtienes el plazo más largo.</li><li>Se asume que cada jugador alineado juega 90 minutos en su posición. Con dos partidos cuenta el de mayor efecto.</li><li>No se calcula la caída por edad, que afecta a los veteranos, ni lesiones, walkovers o sanciones.</li><li>En “Anotación y balón parado” se estima solo Anotación.</li></ul>'+
+ '<h3>Qué tomar en cuenta</h3><ul><li>Es una estimación. Hattrick no publica su fórmula exacta, y la wiki advierte que 5 semanas pueden ser 4 o 6 en casos individuales.</li><li>Hattrick no muestra el avance dentro de un nivel. Usa “Avance ya acumulado” para probar escenarios (con 0% obtienes el plazo más largo) o elige “Según historial semanal” para estimarlo a partir de tus registros.</li><li>Se asume que cada jugador alineado juega 90 minutos en su posición. Con dos partidos cuenta el de mayor efecto.</li><li>No se calcula la caída por edad, que afecta a los veteranos, ni lesiones, walkovers o sanciones.</li><li>En “Anotación y balón parado” se estima solo Anotación.</li></ul>'+
  '<h3>Fuentes</h3><ul><li><a href="https://github.com/ho-dev/HattrickOrganizer/blob/master/src/main/java/core/training/WeeklyTrainingType.java" target="_blank" rel="noopener">Hattrick Organizer, WeeklyTrainingType</a> (fórmula y constantes)</li><li><a href="https://wiki.hattrick.org/wiki/Training" target="_blank" rel="noopener">Hattrick Wiki, Training</a> (tipos y duración de referencia)</li><li>Hattrick, páginas Entrenamiento y Cuerpo técnico (velocidad del entrenador, asistentes y eficiencia)</li></ul>'}
-function render(){renderSettings();renderTabs();var m=document.getElementById('main'),t=S.tab;m.innerHTML=(!S.players.length&&(t==='sim'||t==='cmp'||t==='plan'))?renderEmpty():t==='sim'?renderSim():t==='cmp'?renderCmp():t==='plan'?renderPlan():t==='team'?renderTeam():renderMet();renderFolder();save()}
+function render(){renderSettings();renderTabs();var m=document.getElementById('main'),t=S.tab;m.innerHTML=(!S.players.length&&(t==='sim'||t==='cmp'||t==='plan'||t==='adv'))?renderEmpty():t==='sim'?renderSim():t==='cmp'?renderCmp():t==='plan'?renderPlan():t==='adv'?renderAdv():t==='team'?renderTeam():renderMet();renderFolder();save()}
 
 /* ===== Importador ===== */
 function parsePlayers(txt){var out=[],re=/Edad\s+(\d+)\s+años\s+y\s+(\d+)\s+días/g,m,idx=[];while(m=re.exec(txt))idx.push({i:m.index,y:+m[1],d:+m[2],end:re.lastIndex});
@@ -250,7 +310,7 @@ function parsePlayers(txt){var out=[],re=/Edad\s+(\d+)\s+años\s+y\s+(\d+)\s+dí
 function importPlayers(list,hasPos){var old={};S.players.forEach(function(p){old[p.name]=p});
  list.forEach(function(p){if(hasPos)S.base[p.name]=[p.a||'',p.b||''];else if(!S.base[p.name])S.base[p.name]=['','']});S.players=list;if(hasPos)S.lineups={};S.evp='';
  if(S.taker&&!list.some(function(p){return p.name===S.taker}))S.taker='';
- if(!list.some(function(p){return S.base[p.name][0]})){autoLeague();S.lineups={}}return list.length}
+ if(!list.some(function(p){return S.base[p.name][0]})){autoLeague();S.lineups={}}snapshot();return list.length}
 /* Sin alineación previa: arma una de liga por rol y TSI para que el simulador arranque con datos. */
 function autoLeague(){var f={POR:1,DL:2,DC:3,LAT:2,MC:3,DEL:0};S.players.slice().sort(function(a,b){return b.tsi-a.tsi}).forEach(function(p){if(p.role&&f[p.role]>0){S.base[p.name][0]=p.role;f[p.role]--}})}
 function parseCSV(text){text=text.replace(/^﻿/,'');var first=text.split(/\r?\n/)[0],best=';',n=-1;[';',',','\t'].forEach(function(s){var c=first.split(s).length;if(c>n){n=c;best=s}});
@@ -272,7 +332,7 @@ function csvPlayers(text){var rows=parseCSV(text).filter(function(r){return r.jo
 function toCSV(){var hd=['Nombre','Años','Días','TSI','Especialidad','Rol'].concat(SK.map(function(k){return k[1]}),['Liga','Amistoso']);function q(x){x=String(x);return /[;"\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x}
  var l=S.players.length?lineup(S.type):{};return '﻿'+[hd.join(';')].concat(S.players.map(function(p){var v=l[p.name]||['',''];return [p.name,p.y,p.d,p.tsi,p.spec,p.role||''].concat(SK.map(function(k){return p.s[k[0]]}),[v[0],v[1]]).map(q).join(';')})).join('\r\n')+'\r\n'}
 function dl(name,text,type){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)}
-function loadCSVText(t){var r=csvPlayers(t);if(r.errs){var e=r.errs;msg(e.slice(0,4).join(' ')+(e.length>4?' Y '+(e.length-4)+' errores más.':'')+' No se cambió la plantilla.');return}var n=importPlayers(r.list,r.hasPos);render();msg(n+' jugadores cargados. Abre Simulador para ver los tiempos.')}
+function loadCSVText(t){var r=csvPlayers(t);if(r.errs){var e=r.errs;msg(e.slice(0,4).join(' ')+(e.length>4?' Y '+(e.length-4)+' errores más.':'')+' No se cambió la plantilla.');return}var n=importPlayers(r.list,r.hasPos);render();msg(n+' jugadores cargados y semana registrada en Avance semanal.')}
 function loadPlanText(t){try{var v=JSON.parse(t);if(!v||!Array.isArray(v.players))throw 0;S=Object.assign(defaults(),v);render();msg('Plan abierto con '+S.players.length+' jugadores.')}catch(er){msg('Ese archivo no es un plan válido. Usa uno creado con Descargar plan .json.')}}
 
 /* ===== Carpeta local (File System Access; requiere abrir el .html en Chrome o Edge) ===== */
@@ -317,17 +377,22 @@ document.addEventListener('change',function(ev){var e=ev.target,d=e.dataset;
  if(d.bf!==undefined&&d.b!==undefined){var b=S.blocks[+d.b];b[d.bf]=d.bf==='w'?Math.max(1,Math.min(200,+e.value||1)):e.value;render();return}
  if(d.p!==undefined){var p=S.players[+d.p];if(d.f==='y'||d.f==='d')p[d.f]=+e.value;else p.s[d.f]=Math.max(0,Math.min(20,+e.value));render();return}
  if(d.taker!==undefined){S.taker=d.taker;render();return}
+ if(d.hd!==undefined&&e.value){var hh=hist(),it=hh[+d.hd];if(hh.some(function(x,j){return j!==+d.hd&&x.date===e.value})){render();msg('Ya hay un registro con esa fecha.');return}it.date=e.value;hh.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0});render();return}
+ if(d.ht!==undefined){hist()[+d.ht].type=e.value;render();return}
  if(e.id==='club'){S.club=e.value.trim();render();return}
  if(e.id==='csvFile'||e.id==='planFile'){var f=e.files&&e.files[0];if(!f)return;var isPlan=e.id==='planFile';f.text().then(function(t){if(isPlan)loadPlanText(t);else loadCSVText(t)},function(){msg('No pude leer ese archivo.')})}});
 document.addEventListener('click',function(ev){var e=ev.target,d=e.dataset||{};
  if(d.tab){S.tab=d.tab;render();return}
  if(d.goto){S.type=d.goto;S.tab='sim';render();return}
+ if(e.id==='regWeek'){if(!S.players.length)return;var rd=document.getElementById('regDate'),dt=snapshot(rd&&rd.value||undefined);render();msg('Semana del '+fmtI(dt)+' registrada.');return}
+ if(d.hdel!==undefined){hist().splice(+d.hdel,1);render();return}
+ if(e.id==='applyCal'||e.id==='applyCal100'){S.set.cal=+d.cal;render();return}
  if(e.id==='suggest'){suggestFriendly(S.type);render();return}
  if(e.id==='resetL'){S.lineups[S.type]=JSON.parse(JSON.stringify(S.base));render();return}
  if(e.id==='addB'){S.blocks.push({t:S.type,w:8});render();return}
  if(d.bdel!==undefined){S.blocks.splice(+d.bdel,1);render();return}
  if(d.bmove!==undefined){var i=+d.bmove,j=i+ +d.dir;if(j>=0&&j<S.blocks.length){var x=S.blocks[i];S.blocks[i]=S.blocks[j];S.blocks[j]=x}render();return}
- if(e.id==='doImp'){var tx=document.getElementById('imp').value;if(/^﻿?\s*"?(nombre|jugador)\b/i.test(tx)){loadCSVText(tx);return}var l=parsePlayers(tx);if(!l.length){msg('No encontré jugadores. En la página Jugadores usa Ctrl+A, copia y vuelve a pegar.');return}var cm=/^\s*(.+?)\s*»\s*$/m.exec(tx);if(cm&&!S.club)S.club=cm[1];var n=importPlayers(l,false);render();msg(n+' jugadores cargados. Abre Simulador para ver los tiempos.');return}
+ if(e.id==='doImp'){var tx=document.getElementById('imp').value;if(/^﻿?\s*"?(nombre|jugador)\b/i.test(tx)){loadCSVText(tx);return}var l=parsePlayers(tx);if(!l.length){msg('No encontré jugadores. En la página Jugadores usa Ctrl+A, copia y vuelve a pegar.');return}var cm=/^\s*(.+?)\s*»\s*$/m.exec(tx);if(cm&&!S.club)S.club=cm[1];var n=importPlayers(l,false);render();msg(n+' jugadores cargados y semana registrada en Avance semanal.');return}
  if(e.id==='dlTpl'){dl('plantilla-jugadores.csv','﻿Nombre;Años;Días;TSI;Especialidad;Rol;Portería;Defensa;Jugadas;Lateral;Pases;Anotación;Balón parado;Liga;Amistoso\r\nJugador de ejemplo;20;15;5000;-;MC;1;4;8;4;5;3;3;MC;\r\n','text/csv;charset=utf-8');return}
  if(e.id==='dlCsv'){dl('plantilla-jugadores.csv',toCSV(),'text/csv;charset=utf-8');return}
  if(e.id==='dlPlan'){dl('plan-entrenamiento.json',JSON.stringify(S,null,1),'application/json');return}
